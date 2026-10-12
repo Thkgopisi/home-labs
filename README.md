@@ -103,7 +103,7 @@ home-labs/
 
 ## How to Reproduce
 
-1. Build the topology shown above in GNS3.
+1. Build the topology shown above in Packet Tracer/ GNS3.
 2. Create the VLANs, access ports and 802.1Q trunks using the baseline configs in `configs/`.
 3. Apply the extended ACL and the local AAA configuration.
 4. Run the connectivity tests listed in `tests/` while capturing traffic on the trunk links with Wireshark.
