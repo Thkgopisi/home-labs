@@ -1,1 +1,91 @@
+! ####################################################################
+! PACKET TRACER LAB: CORE MULTI-VLAN LAYER 3 SWITCH CONFIGURATION
+! ARCHITECTURE: ZERO-TRUST NETWORK SEGMENTATION & ACCESS MANAGEMENT
+! AUTHOR: THABANG KGOPISI
+! NOTE: Replace <password> with your own.
+! ####################################################################
 
+
+! ==========================================
+! 1. IDENTITY & ROLE-BASED ACCESS (AAA)
+! ------------------------------------------
+! Local AAA with two roles:
+!   admin-net = full network infrastructure access (privilege 15)
+!   audit-sec = restricted monitoring and audit access (privilege 7)
+! ==========================================
+
+version 15.0
+hostname CORE-L3-SW01
+
+aaa new-model
+
+username admin-net privilege 15 secret <password>
+username audit-sec privilege 7 secret <password>
+
+aaa authentication login default local
+aaa authorization exec default local
+
+
+! ==========================================
+! 2. ENTERPRISE VLAN & SEGMENTATION SETUP
+! ==========================================
+
+vlan 10
+ name Corporate_Users
+vlan 20
+ name Infrastructure_Management
+vlan 30
+ name Protected_Database_Zone
+
+
+! ==========================================
+! 3. ZERO-TRUST PERIMETER DEFENSE (ACLs)
+! ------------------------------------------
+! Blocks Users (VLAN 10) from reaching the Database zone (VLAN 30).
+! All other traffic is permitted.
+! ==========================================
+
+ip access-list extended DENY_LATERAL_MOVEMENT
+ deny ip 192.168.10.0 0.0.0.255 192.168.30.0 0.0.0.255
+ permit ip any any
+
+
+! ==========================================
+! 4. INTER-VLAN ROUTING & SVI PROTECTION
+! ------------------------------------------
+! ip routing must be enabled globally.
+! The ACL is applied inbound on the Users SVI.
+! ==========================================
+
+ip routing
+
+interface Vlan10
+ description Gateway for Corporate User Devices
+ ip address 192.168.10.1 255.255.255.0
+ ip access-group DENY_LATERAL_MOVEMENT in
+ no shutdown
+
+interface Vlan20
+ description Gateway for Administrative Infrastructure Control
+ ip address 192.168.20.1 255.255.255.0
+ no shutdown
+
+interface Vlan30
+ description Gateway for High-Security Database Services
+ ip address 192.168.30.1 255.255.255.0
+ no shutdown
+
+
+! ==========================================
+! 5. TRUNK INTERFACE
+! ------------------------------------------
+! 802.1Q trunk down to the access switches.
+! ==========================================
+
+interface GigabitEthernet0/1
+ description 802.1Q Core Trunk to Access Switches
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan 10,20,30
+
+end
